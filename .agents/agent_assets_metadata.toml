@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "u0icXOgg0fin3rXZcWyQN"
+uri = "file://artifacts/neighborly/assets/images/icon.png"
+type = "image"
+title = "neighborly app icon"
