@@ -51,13 +51,21 @@
     "react-native-svg": "15.12.1",
     "react-native-web": "^0.21.0",
     "react-native-worklets": "0.5.1",
+    "tailwindcss": "^3.4.19",
     "typescript": "~5.9.2",
     "zod": "catalog:",
     "zod-validation-error": "^3.4.0"
   },
   "dependencies": {
+    "clsx": "catalog:",
     "date-fns": "^4.1.0",
+    "expo-auth-session": "^7.0.10",
+    "expo-crypto": "^15.0.8",
     "firebase": "^11.10.0",
-    "lucide-react-native": "^0.460.0"
+    "lucide-react-native": "^0.460.0",
+    "moti": "^0.30.0",
+    "nativewind": "^4.2.3",
+    "react-native-css-interop": "^0.2.3",
+    "tailwind-merge": "catalog:"
   }
 }
