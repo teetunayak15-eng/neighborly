@@ -5,14 +5,20 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
+
     "ios": {
       "supportsTablet": true
     },
+
     "android": {
       "package": "com.neighborly.app"
+    },
+
+    "extra": {
+      "eas": {
+        "projectId": "507b42d7-1473-4043-9cc1-f38599ae99a9"
+      }
     }
   }
 }
