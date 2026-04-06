@@ -1,0 +1,5 @@
+{
+  "name": "Neighborly",
+  "description": "A location-based app for requesting or offering small favors within your neighborhood radius.",
+  "requestFramePermissions": ["geolocation"]
+}

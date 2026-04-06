@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Information about a user in the Neighborly community.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique ID of the user." },
+        "displayName": { "type": "string", "description": "The name of the user." },
+        "email": { "type": "string", "format": "email", "description": "The email address of the user." },
+        "photoURL": { "type": "string", "description": "The URL of the user's photo." },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "The role of the user." },
+        "isVerified": { "type": "boolean", "description": "Whether the user is a verified resident." },
+        "badges": { "type": "array", "items": { "type": "string" }, "description": "Badges earned by the user." },
+        "reliabilityScore": { "type": "number", "description": "The reliability score of the user." },
+        "neighborsHelped": { "type": "number", "description": "The number of neighbors the user has helped." },
+        "thankYous": { "type": "number", "description": "The number of thank yous the user has received." },
+        "completionCount": { "type": "number", "description": "The number of tasks the user has completed." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user profile was created." },
+        "location": {
+          "type": "object",
+          "properties": {
+            "address": { "type": "string" },
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" }
+          }
+        }
+      },
+      "required": ["uid", "displayName", "email", "role", "createdAt"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "A request or offer for help in the neighborhood.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "type": { "type": "string", "enum": ["request", "offer"] },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "urgency": { "type": "string", "enum": ["low", "medium", "high", "urgent"] },
+        "status": { "type": "string", "enum": ["open", "accepted", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" }
+          }
+        }
+      },
+      "required": ["authorId", "authorName", "type", "title", "description", "category", "urgency", "status", "createdAt"]
+    },
+    "ChatRoom": {
+      "title": "Chat Room",
+      "description": "A conversation between two users about a specific post.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "postId": { "type": "string" },
+        "lastMessage": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["participants", "postId", "updatedAt"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "A single message within a chat room.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "text", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "A notification for a user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "message", "type", "read", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "UserProfile" },
+      "description": "User profiles."
+    },
+    "posts/{postId}": {
+      "schema": { "$ref": "Post" },
+      "description": "Community posts."
+    },
+    "chatRooms/{roomId}": {
+      "schema": { "$ref": "ChatRoom" },
+      "description": "Chat rooms between users."
+    },
+    "chatRooms/{roomId}/messages/{messageId}": {
+      "schema": { "$ref": "ChatMessage" },
+      "description": "Messages within a chat room."
+    },
+    "notifications/{notificationId}": {
+      "schema": { "$ref": "Notification" },
+      "description": "User notifications."
+    }
+  }
+}
