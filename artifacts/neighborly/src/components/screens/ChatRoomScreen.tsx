@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { ArrowLeft, Send, User } from 'lucide-react-native';
 import { ChatRoom, ChatMessage } from '../../types';
-import { auth, db, OperationType, handleFirestoreError } from '../firebase';
+import {
+  auth, db, OperationType, handleFirestoreError,
+  sanitize, checkMessageRateLimit, LIMITS
+} from '../firebase';
 import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 import { cn } from '../../lib/utils';
 
@@ -17,28 +20,40 @@ export const ChatRoomScreen = ({ room, onBack }: ChatRoomScreenProps) => {
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    const q = query(collection(db, `chatRooms/${room.id}/messages`), orderBy('createdAt', 'asc'));
+    const q = query(
+      collection(db, `chatRooms/${room.id}/messages`),
+      orderBy('createdAt', 'asc')
+    );
     return onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ChatMessage)));
     }, (error) => {
-      console.error('Error fetching messages:', error);
       handleFirestoreError(error, OperationType.LIST, `chatRooms/${room.id}/messages`);
     });
   }, [room.id]);
 
   const handleSend = async () => {
-    if (!newMessage.trim() || !auth.currentUser) return;
-    const text = newMessage;
+    if (!auth.currentUser) return;
+
+    const cleanText = sanitize(newMessage, LIMITS.CHAT_MESSAGE);
+    if (!cleanText) return;
+
+    try {
+      checkMessageRateLimit(auth.currentUser.uid);
+    } catch (err: any) {
+      Alert.alert('Slow down', err.message);
+      return;
+    }
+
     setNewMessage('');
     try {
       await addDoc(collection(db, `chatRooms/${room.id}/messages`), {
         senderId: auth.currentUser.uid,
-        text,
-        createdAt: serverTimestamp()
+        text: cleanText,
+        createdAt: serverTimestamp(),
       });
       await updateDoc(doc(db, 'chatRooms', room.id), {
-        lastMessage: text,
-        updatedAt: serverTimestamp()
+        lastMessage: cleanText.slice(0, 80),
+        updatedAt: serverTimestamp(),
       });
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'messages');
@@ -46,7 +61,7 @@ export const ChatRoomScreen = ({ room, onBack }: ChatRoomScreenProps) => {
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       className="flex-1 bg-surface"
       keyboardVerticalOffset={100}
@@ -79,7 +94,9 @@ export const ChatRoomScreen = ({ room, onBack }: ChatRoomScreenProps) => {
           )}>
             <View className={cn(
               'p-4 rounded-2xl',
-              msg.senderId === auth.currentUser?.uid ? 'bg-primary rounded-tr-none' : 'bg-surface-container-highest rounded-tl-none'
+              msg.senderId === auth.currentUser?.uid
+                ? 'bg-primary rounded-tr-none'
+                : 'bg-surface-container-highest rounded-tl-none'
             )}>
               <Text className={cn(
                 'text-sm',
@@ -98,9 +115,10 @@ export const ChatRoomScreen = ({ room, onBack }: ChatRoomScreenProps) => {
       <View className="p-4 border-t border-outline-variant/10 flex-row items-center gap-3">
         <TextInput
           value={newMessage}
-          onChangeText={setNewMessage}
+          onChangeText={(t) => setNewMessage(t.slice(0, LIMITS.CHAT_MESSAGE))}
           placeholder="Type a message..."
           placeholderTextColor="#79747E"
+          maxLength={LIMITS.CHAT_MESSAGE}
           className="flex-1 p-4 bg-surface-container-low rounded-2xl text-on-surface"
           onSubmitEditing={handleSend}
           returnKeyType="send"

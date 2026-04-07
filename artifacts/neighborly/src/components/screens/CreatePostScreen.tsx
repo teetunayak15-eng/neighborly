@@ -3,7 +3,10 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'reac
 import { ArrowLeft } from 'lucide-react-native';
 import { NativeButton } from '../NativeButton';
 import { PostType, UrgencyLevel, UserProfile } from '../../types';
-import { auth, db, OperationType, handleFirestoreError } from '../firebase';
+import {
+  auth, db, OperationType, handleFirestoreError,
+  sanitize, checkPostRateLimit, LIMITS
+} from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { cn } from '../../lib/utils';
 
@@ -27,36 +30,60 @@ export const CreatePostScreen = ({ onBack, userLocation, profile }: CreatePostSc
       setError('You must be logged in to post.');
       return;
     }
-    if (!title.trim() || !description.trim()) {
-      setError('Title and description are required.');
+
+    const cleanTitle = sanitize(title, LIMITS.POST_TITLE);
+    const cleanDescription = sanitize(description, LIMITS.POST_DESCRIPTION);
+    const cleanCategory = sanitize(category, LIMITS.CATEGORY);
+
+    if (!cleanTitle) {
+      setError('Title is required.');
       return;
     }
+    if (cleanTitle.length < 3) {
+      setError('Title must be at least 3 characters.');
+      return;
+    }
+    if (!cleanDescription) {
+      setError('Description is required.');
+      return;
+    }
+    if (cleanDescription.length < 10) {
+      setError('Description must be at least 10 characters.');
+      return;
+    }
+
+    try {
+      checkPostRateLimit(auth.currentUser.uid);
+    } catch (err: any) {
+      setError(err.message);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
       const postData = {
         authorId: auth.currentUser.uid,
-        authorName: auth.currentUser.displayName || 'Neighbor',
+        authorName: sanitize(auth.currentUser.displayName || 'Neighbor', 60),
         authorPhoto: auth.currentUser.photoURL || '',
         authorIsVerified: profile?.isVerified || false,
         type,
-        title: title.trim(),
-        category,
-        description: description.trim(),
+        title: cleanTitle,
+        category: cleanCategory,
+        description: cleanDescription,
         urgency,
         location: {
           latitude: userLocation.lat,
-          longitude: userLocation.lng
+          longitude: userLocation.lng,
         },
         status: 'open',
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       };
       await addDoc(collection(db, 'posts'), postData);
       onBack();
     } catch (err: any) {
-      console.error('Error creating post:', err);
       let msg = 'Failed to create post. Please try again.';
-      if (err.message && err.message.includes('permission-denied')) {
+      if (err.message?.includes('permission-denied')) {
         msg = 'Permission denied. Please check your account permissions.';
       } else if (err.message) {
         msg = err.message;
@@ -99,25 +126,33 @@ export const CreatePostScreen = ({ onBack, userLocation, profile }: CreatePostSc
         </View>
 
         <View>
-          <Text className="text-sm font-bold text-outline uppercase tracking-widest mb-2">Title</Text>
+          <View className="flex-row justify-between mb-2">
+            <Text className="text-sm font-bold text-outline uppercase tracking-widest">Title</Text>
+            <Text className="text-xs text-outline">{title.length}/{LIMITS.POST_TITLE}</Text>
+          </View>
           <TextInput
             value={title}
-            onChangeText={setTitle}
+            onChangeText={(t) => setTitle(t.slice(0, LIMITS.POST_TITLE))}
             placeholder="What do you need or want to share?"
             placeholderTextColor="#79747E"
+            maxLength={LIMITS.POST_TITLE}
             className="w-full p-4 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-on-surface"
           />
         </View>
 
         <View>
-          <Text className="text-sm font-bold text-outline uppercase tracking-widest mb-2">Description</Text>
+          <View className="flex-row justify-between mb-2">
+            <Text className="text-sm font-bold text-outline uppercase tracking-widest">Description</Text>
+            <Text className="text-xs text-outline">{description.length}/{LIMITS.POST_DESCRIPTION}</Text>
+          </View>
           <TextInput
             value={description}
-            onChangeText={setDescription}
+            onChangeText={(t) => setDescription(t.slice(0, LIMITS.POST_DESCRIPTION))}
             placeholder="Add more details..."
             placeholderTextColor="#79747E"
             multiline
             numberOfLines={4}
+            maxLength={LIMITS.POST_DESCRIPTION}
             className="w-full p-4 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-on-surface min-h-[120px]"
           />
         </View>
@@ -151,9 +186,9 @@ export const CreatePostScreen = ({ onBack, userLocation, profile }: CreatePostSc
           </View>
         )}
 
-        <NativeButton 
-          onPress={handleSubmit} 
-          loading={loading} 
+        <NativeButton
+          onPress={handleSubmit}
+          loading={loading}
           className="w-full py-4"
         >
           Post to Neighborhood
