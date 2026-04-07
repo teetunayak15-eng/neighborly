@@ -121,16 +121,11 @@ export function handleFirestoreError(
   operationType: OperationType,
   path: string | null
 ) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : 'Unknown error',
-    operationType,
-    path,
-    authenticated: !!auth.currentUser,
-  };
+  const message = error instanceof Error ? error.message : 'Unknown error';
   if (__DEV__) {
-    console.error('Firestore Error:', JSON.stringify(errInfo));
+    console.warn(`Firestore [${operationType}] ${path ?? ''}:`, message);
   }
-  throw new Error(errInfo.error);
+  // Don't throw — log only so errors don't crash the app
 }
 
 // ─── Connection Test ──────────────────────────────────────────────────────────
