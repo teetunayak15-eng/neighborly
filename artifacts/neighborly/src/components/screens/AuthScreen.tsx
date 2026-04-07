@@ -4,7 +4,6 @@ import { HeartHandshake, CheckSquare, Square, Info } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri } from 'expo-auth-session';
 import { signInWithGoogleCredential, checkRateLimit } from '../firebase';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -12,7 +11,8 @@ WebBrowser.maybeCompleteAuthSession();
 const GOOGLE_WEB_CLIENT_ID = "885271296090-7ot0r53kmh4800j4atgopjnl0h6bv6jf.apps.googleusercontent.com";
 const GOOGLE_ANDROID_CLIENT_ID = "885271296090-7ot0r53kmh4800j4atgopjnl0h6bv6jf.apps.googleusercontent.com";
 
-const redirectUri = makeRedirectUri({ useProxy: true });
+// Hardcoded Expo auth proxy — must match what's registered in Google Cloud Console
+const redirectUri = "https://auth.expo.io/@teetunayak15/neighborly";
 
 export const AuthScreen = () => {
   const [agreed, setAgreed] = useState(false);
