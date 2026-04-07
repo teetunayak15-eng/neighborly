@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, ImageBackground, TouchableOpacity, Alert } from 'react-native';
-import { HeartHandshake, CheckSquare, Square } from 'lucide-react-native';
+import { View, Text, Image, ImageBackground, TouchableOpacity, Alert, Clipboard } from 'react-native';
+import { HeartHandshake, CheckSquare, Square, Info } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
 import { signInWithGoogleCredential, checkRateLimit } from '../firebase';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// TODO: Replace these with your actual Google OAuth Client IDs from:
-// Firebase Console → Project Settings → General → Your apps → Web API Key
-// Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs
 const GOOGLE_WEB_CLIENT_ID = "885271296090-7ot0r53kmh4800j4atgopjnl0h6bv6jf.apps.googleusercontent.com";
 const GOOGLE_ANDROID_CLIENT_ID = "885271296090-7ot0r53kmh4800j4atgopjnl0h6bv6jf.apps.googleusercontent.com";
+
+const redirectUri = makeRedirectUri({ useProxy: true });
 
 export const AuthScreen = () => {
   const [agreed, setAgreed] = useState(false);
@@ -21,6 +21,7 @@ export const AuthScreen = () => {
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId: GOOGLE_WEB_CLIENT_ID,
     androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+    redirectUri,
   });
 
   useEffect(() => {
@@ -49,6 +50,17 @@ export const AuthScreen = () => {
     }
   };
 
+  const showRedirectUri = () => {
+    Alert.alert(
+      'Redirect URI (add to Google Cloud)',
+      redirectUri,
+      [
+        { text: 'Copy', onPress: () => Clipboard.setString(redirectUri) },
+        { text: 'OK' },
+      ]
+    );
+  };
+
   return (
     <View className="flex-1 bg-black">
       <ImageBackground
@@ -57,7 +69,7 @@ export const AuthScreen = () => {
         resizeMode="cover"
         imageStyle={{ opacity: 0.5 }}
       >
-        <MotiView 
+        <MotiView
           from={{ translateY: 50, opacity: 0 }}
           animate={{ translateY: 0, opacity: 1 }}
           transition={{ type: 'spring', damping: 20, delay: 100 }}
@@ -69,12 +81,12 @@ export const AuthScreen = () => {
             </View>
             <Text className="text-5xl font-extrabold tracking-tight text-white">Neighborly</Text>
           </View>
-          
+
           <Text className="text-white/90 mb-8 text-xl font-medium leading-relaxed">
             Connect with your neighbors, share resources, and build a stronger community together.
           </Text>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => setAgreed(!agreed)}
             className="flex-row items-center mb-8"
@@ -88,20 +100,28 @@ export const AuthScreen = () => {
               I agree to the Terms of Service and Privacy Policy
             </Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             onPress={handleSignIn}
             disabled={!agreed || loading || !request}
             activeOpacity={0.8}
             className={`w-full py-4 rounded-2xl flex-row items-center justify-center shadow-xl ${agreed && !loading ? 'bg-white' : 'bg-white/40'}`}
           >
-            <Image 
-              source={{ uri: "https://www.google.com/favicon.ico" }} 
+            <Image
+              source={{ uri: "https://www.google.com/favicon.ico" }}
               style={{ width: 24, height: 24, marginRight: 12, opacity: agreed ? 1 : 0.5 }}
             />
             <Text className={`font-bold text-lg ${agreed && !loading ? 'text-gray-900' : 'text-gray-900/50'}`}>
               {loading ? 'Signing in...' : 'Continue with Google'}
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={showRedirectUri}
+            className="flex-row items-center justify-center mt-4 opacity-60"
+          >
+            <Info size={14} color="#FFFFFF" />
+            <Text className="text-white text-xs ml-1">Show redirect URI for Google Cloud setup</Text>
           </TouchableOpacity>
         </MotiView>
       </ImageBackground>
