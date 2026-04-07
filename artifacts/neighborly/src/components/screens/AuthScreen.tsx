@@ -11,8 +11,8 @@ WebBrowser.maybeCompleteAuthSession();
 // TODO: Replace these with your actual Google OAuth Client IDs from:
 // Firebase Console → Project Settings → General → Your apps → Web API Key
 // Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs
-const GOOGLE_WEB_CLIENT_ID = "885271296090-REPLACE_WITH_WEB_CLIENT_ID.apps.googleusercontent.com";
-const GOOGLE_ANDROID_CLIENT_ID = "885271296090-REPLACE_WITH_ANDROID_CLIENT_ID.apps.googleusercontent.com";
+const GOOGLE_WEB_CLIENT_ID = "885271296090-7ot0r53kmh4800j4atgopjnl0h6bv6jf.apps.googleusercontent.com";
+const GOOGLE_ANDROID_CLIENT_ID = "885271296090-7ot0r53kmh4800j4atgopjnl0h6bv6jf.apps.googleusercontent.com";
 
 export const AuthScreen = () => {
   const [agreed, setAgreed] = useState(false);
