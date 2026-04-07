@@ -44,7 +44,7 @@ export const AuthScreen = () => {
     if (!agreed) return;
     try {
       checkRateLimit();
-      await promptAsync();
+      await promptAsync({ useProxy: true });
     } catch (err: any) {
       Alert.alert('Error', err.message);
     }
